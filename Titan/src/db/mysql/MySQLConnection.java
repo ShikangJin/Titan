@@ -11,51 +11,46 @@ import java.util.Set;
 
 import db.DBConnection;
 import entity.Item;
+import entity.Item.ItemBuilder;
 import external.ExternalAPI;
 import external.ExternalAPIFactory;
-import entity.Item.ItemBuilder;
 
-
-// This is a singleton pattern.
 public class MySQLConnection implements DBConnection {
 	private static MySQLConnection instance;
-
+	
 	public static DBConnection getInstance() {
 		if (instance == null) {
 			instance = new MySQLConnection();
 		}
 		return instance;
 	}
-
-	// Import java.sql.Connection. Don't use com.mysql.jdbc.Connection.
+	
+	// Import java.sql.Connection. Don't use com.mysql.jdbc.Connection
 	private Connection conn = null;
-
+	
 	private MySQLConnection() {
 		try {
-			// Forcing the class representing the MySQL driver to load and
-			// initialize.
-			// The newInstance() call is a work around for some broken Java
-			// implementations.
+			// Forcing the class representing the MySQL driver to load and initialize
+			// The newInstance() call is a work around for some broken Java implementations.
 			Class.forName("com.mysql.jdbc.Driver").newInstance();
 			conn = DriverManager.getConnection(MySQLDBUtil.URL);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-
+	
 	@Override
 	public void close() {
 		if (conn != null) {
 			try {
 				conn.close();
-			} catch (Exception e) { /* ignored */
-			}
+			} catch (Exception e) {}
 		}
 	}
-
+	
 	@Override
 	public void setFavoriteItems(String userId, List<String> itemIds) {
-		String query = "INSERT INTO history (user_id, item_id) VALUES (?, ?)";
+		String query = "INSERT INTO history (user_id, item_id) VALUES (?,?)";
 		try {
 			PreparedStatement statement = conn.prepareStatement(query);
 			for (String itemId : itemIds) {
@@ -66,26 +61,23 @@ public class MySQLConnection implements DBConnection {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
-		
 	}
-
+	
 	@Override
 	public void unsetFavoriteItems(String userId, List<String> itemIds) {
 		String query = "DELETE FROM history WHERE user_id = ? and item_id = ?";
-	    try {
-	      PreparedStatement statement = conn.prepareStatement(query);
-	      for (String itemId : itemIds) {
-	        statement.setString(1, userId);
-	        statement.setString(2, itemId);
-	        statement.execute();
-	      }
-	    } catch (SQLException e) {
-	      e.printStackTrace();
-	    }		
-		
+		try {
+			PreparedStatement statement = conn.prepareStatement(query);
+			for (String itemId : itemIds) {
+				statement.setString(1, userId);
+				statement.setString(2, itemId);
+				statement.execute();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
-
+	
 	@Override
 	public Set<String> getFavoriteItemIds(String userId) {
 		Set<String> favoriteItems = new HashSet<>();
@@ -102,25 +94,21 @@ public class MySQLConnection implements DBConnection {
 			e.printStackTrace();
 		}
 		return favoriteItems;
-
 	}
-
+	
 	@Override
 	public Set<Item> getFavoriteItems(String userId) {
 		Set<String> itemIds = getFavoriteItemIds(userId);
 		Set<Item> favoriteItems = new HashSet<>();
 		try {
-
 			for (String itemId : itemIds) {
-				String sql = "SELECT * from items WHERE item_id = ? ";
+				String sql = "SELECT * from items WHERE item_id = ?";
 				PreparedStatement statement = conn.prepareStatement(sql);
 				statement.setString(1, itemId);
 				ResultSet rs = statement.executeQuery();
 				ItemBuilder builder = new ItemBuilder();
-
-				// Because itemId is unique and given one item id there should
-				// have
-				// only one result returned.
+				
+				// Because itemId is unique and given one item id there should have only one result returned
 				if (rs.next()) {
 					builder.setItemId(rs.getString("item_id"));
 					builder.setName(rs.getString("name"));
@@ -138,10 +126,8 @@ public class MySQLConnection implements DBConnection {
 					builder.setImageUrl(rs.getString("image_url"));
 					builder.setUrl(rs.getString("url"));
 				}
-
-				// Join categories information into builder.
-				// But why we do not join in sql? Because it'll be difficult
-				// to set it in builder.
+				
+				// Join categories information into builder. 
 				sql = "SELECT * from categories WHERE item_id = ?";
 				statement = conn.prepareStatement(sql);
 				statement.setString(1, itemId);
@@ -157,35 +143,45 @@ public class MySQLConnection implements DBConnection {
 			e.printStackTrace();
 		}
 		return favoriteItems;
-
 	}
-
+	
 	@Override
 	public Set<String> getCategories(String itemId) {
 		Set<String> categories = new HashSet<>();
 		try {
-			String sql = "SELECT category from categories WHERE item_id = ? ";
+			String sql = "SELECT category from categories WHERE item_id = ?";
 			PreparedStatement statement = conn.prepareStatement(sql);
 			statement.setString(1, itemId);
 			ResultSet rs = statement.executeQuery();
 			while (rs.next()) {
 				categories.add(rs.getString("category"));
 			}
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		return categories;
-
 	}
-
+	
+	@Override
+	public List<Item> searchItems(String userId, double lat, double lon, String term) {
+		// Connect to external API
+		ExternalAPI api = ExternalAPIFactory.getExternalAPI();
+		List<Item> items = api.search(lat, lon, term);
+		for (Item item : items) {
+			// Save the item into our db.
+			saveItem(item);
+		}	
+		return items;
+	}
+	
 	@Override
 	public void saveItem(Item item) {
 		try {
-			// First, insert into items table
+			//First, insert into items table
 			String sql = "INSERT IGNORE INTO items VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
+			
 			PreparedStatement statement = conn.prepareStatement(sql);
-			statement.setString(1, item.getItemId());
+			statement.setString(1, item.getItemID());
 			statement.setString(2, item.getName());
 			statement.setString(3, item.getCity());
 			statement.setString(4, item.getState());
@@ -201,32 +197,59 @@ public class MySQLConnection implements DBConnection {
 			statement.setString(14, item.getImageUrl());
 			statement.setString(15, item.getUrl());
 			statement.execute();
-
-			// Second, update categories table for each category.
+			
+			//Second, update categories table for each category
 			sql = "INSERT IGNORE INTO categories VALUES (?,?)";
 			for (String category : item.getCategories()) {
 				statement = conn.prepareStatement(sql);
-				statement.setString(1, item.getItemId());
+				statement.setString(1, item.getItemID());
 				statement.setString(2, category);
 				statement.execute();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
-		
 	}
-
+	
 	@Override
-	public List<Item> searchItems(String userId, double lat, double lon, String term) {
-		// Connect to external API
-				ExternalAPI api = ExternalAPIFactory.getExternalAPI(); // moved here
-				List<Item> items = api.search(lat, lon, term);
-				for (Item item : items) {
-					// Save the item into our own db.
-					saveItem(item);
-				}
-				return items;
-
+	public String getFullname(String userId) {
+		String name = "";
+		try {
+			if (conn == null) {
+				return "";
+			}
+			String sql = "SELECT first_name, last_name from users WHERE user_id = ?";
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, userId);
+			ResultSet rs = statement.executeQuery();
+			if (rs.next()) {
+				name += String.join(" ", rs.getString("first_name"), rs.getString("last_name"));
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+		return name;
 	}
+	
+	@Override 
+	public boolean verifyLogin(String userId, String password) {
+		try {
+			if (conn == null) {
+				return false;
+			}
+			
+			String sql = "SELECT user_id from users WHERE user_id = ? and password = ?";
+			PreparedStatement statement = conn.prepareStatement(sql);
+			statement.setString(1, userId);
+			statement.setString(2, password);
+			ResultSet rs = statement.executeQuery();
+			if (rs.next()) {
+				return true;
+			}
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+		return false;
+	}
+	
 }

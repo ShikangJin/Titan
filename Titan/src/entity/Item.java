@@ -2,13 +2,28 @@ package entity;
 
 import java.util.Set;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 public class Item {
-	public String getItemId() {
-		return itemId;
+	private String itemID;
+	private String name;
+	private double rating;
+	private String address;
+	private String city;
+	private String country;
+	private String state;
+	private String zipcode;
+	private double latitude;
+	private double longitude;
+	private String description;
+	private Set<String> categories;
+	private String imageUrl;
+	private String url;
+	private String snippet;
+	private String snippetUrl;
+	public String getItemID() {
+		return itemID;
 	}
 	public String getName() {
 		return name;
@@ -55,26 +70,11 @@ public class Item {
 	public String getSnippetUrl() {
 		return snippetUrl;
 	}
-	private String itemId;
-	private String name;
-	private double rating;
-	private String address;
-	private String city;
-	private String country;
-	private String state;
-	private String zipcode;
-	private double latitude;
-	private double longitude;
-	private String description;
-	private Set<String> categories;
-	private String imageUrl;
-	private String url;
-	private String snippet;
-	private String snippetUrl;
+	
 	public JSONObject toJSONObject() {
 		JSONObject obj = new JSONObject();
 		try {
-			obj.put("item_id", itemId);
+			obj.put("item_id", itemID);
 			obj.put("name", name);
 			obj.put("rating", rating);
 			obj.put("address", address);
@@ -85,7 +85,7 @@ public class Item {
 			obj.put("latitude", latitude);
 			obj.put("longitude", longitude);
 			obj.put("description", description);
-			obj.put("categories", new JSONArray(categories));
+			obj.put("categories", categories);
 			obj.put("image_url", imageUrl);
 			obj.put("url", url);
 			obj.put("snippet_url", snippetUrl);
@@ -95,12 +95,12 @@ public class Item {
 		}
 		return obj;
 	}
-
+	
 	/**
-	 * This is a builder pattern in Java.
+	 * This is a builder pattern in Java
 	 */
 	public Item(ItemBuilder builder) {
-		this.itemId = builder.itemId;
+		this.itemID = builder.itemId;
 		this.name = builder.name;
 		this.rating = builder.rating;
 		this.address = builder.address;
@@ -117,7 +117,7 @@ public class Item {
 		this.snippet = builder.snippet;
 		this.snippetUrl = builder.snippetUrl;
 	}
-
+	
 	public static class ItemBuilder {
 		private String itemId;
 		private String name;
@@ -135,90 +135,92 @@ public class Item {
 		private String url;
 		private String snippet;
 		private String snippetUrl;
-
+		
 		public ItemBuilder setItemId(String itemId) {
 			this.itemId = itemId;
 			return this;
 		}
-
+		
 		public ItemBuilder setName(String name) {
 			this.name = name;
 			return this;
 		}
-
+		
 		public ItemBuilder setRating(double rating) {
 			this.rating = rating;
 			return this;
 		}
-
+		
 		public ItemBuilder setAddress(String address) {
 			this.address = address;
 			return this;
 		}
-
+		
 		public ItemBuilder setCity(String city) {
 			this.city = city;
 			return this;
 		}
-
+		
 		public ItemBuilder setCountry(String country) {
 			this.country = country;
 			return this;
 		}
-
+		
 		public ItemBuilder setState(String state) {
 			this.state = state;
 			return this;
 		}
-
+		
 		public ItemBuilder setZipcode(String zipcode) {
 			this.zipcode = zipcode;
 			return this;
 		}
-
+		
 		public ItemBuilder setLatitude(double latitude) {
 			this.latitude = latitude;
 			return this;
 		}
-
+		
 		public ItemBuilder setLongitude(double longitude) {
 			this.longitude = longitude;
 			return this;
 		}
-
+		
 		public ItemBuilder setDescription(String description) {
 			this.description = description;
 			return this;
 		}
-
+		
 		public ItemBuilder setCategories(Set<String> categories) {
 			this.categories = categories;
 			return this;
 		}
-
+		
 		public ItemBuilder setImageUrl(String imageUrl) {
 			this.imageUrl = imageUrl;
 			return this;
 		}
-
+		
 		public ItemBuilder setUrl(String url) {
 			this.url = url;
 			return this;
 		}
-
+		
 		public ItemBuilder setSnippet(String snippet) {
 			this.snippet = snippet;
 			return this;
 		}
-
+		
 		public ItemBuilder setSnippetUrl(String snippetUrl) {
 			this.snippetUrl = snippetUrl;
 			return this;
 		}
-
+		
 		public Item build() {
 			return new Item(this);
 		}
 	}
-
 }
+
+
+

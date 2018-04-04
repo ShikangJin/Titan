@@ -16,14 +16,15 @@ import org.json.JSONObject;
 import entity.Item;
 import entity.Item.ItemBuilder;
 
-public class TicketMasterAPI implements ExternalAPI{
+public class TicketMasterAPI implements ExternalAPI {
+	
+	
 	private static final String API_HOST = "app.ticketmaster.com";
 	private static final String SEARCH_PATH = "/discovery/v2/events.json";
-	private static final String DEFAULT_TERM = "";  // no restriction
+	private static final String DEFAULT_TERM = "";
 	private static final String API_KEY = "5ILjXeMs4RnB0f9F3X9GwzzM1S84eN4d";
-
 	/**
-	 * Creates and sends a request to the TicketMaster API by term and location.
+	 * creates and sends a request to the TicketMaster API by term and location
 	 */
 	@Override
 	public List<Item> search(double lat, double lon, String term) {
@@ -37,11 +38,9 @@ public class TicketMasterAPI implements ExternalAPI{
 		try {
 			HttpURLConnection connection = (HttpURLConnection) new URL(url + "?" + query).openConnection();
 			connection.setRequestMethod("GET");
- 
 			int responseCode = connection.getResponseCode();
 			System.out.println("\nSending 'GET' request to URL : " + url + "?" + query);
-			System.out.println("Response Code : " + responseCode);
- 
+			System.out.println("Response Code: " + responseCode);
 			BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			String inputLine;
 			StringBuffer response = new StringBuffer();
@@ -49,8 +48,7 @@ public class TicketMasterAPI implements ExternalAPI{
 				response.append(inputLine);
 			}
 			in.close();
-
-			// Extract events array only.
+			//Extract events array only
 			JSONObject responseJson = new JSONObject(response.toString());
 			JSONObject embedded = (JSONObject) responseJson.get("_embedded");
 			JSONArray events = (JSONArray) embedded.get("events");
@@ -60,7 +58,7 @@ public class TicketMasterAPI implements ExternalAPI{
 		}
 		return null;
 	}
- 
+	
 	private String urlEncodeHelper(String term) {
 		try {
 			term = java.net.URLEncoder.encode(term, "UTF-8");
@@ -69,14 +67,14 @@ public class TicketMasterAPI implements ExternalAPI{
 		}
 		return term;
 	}
- 
+	
 	private void queryAPI(double lat, double lon) {
 		List<Item> itemList = search(lat, lon, null);
 		try {
 			for (Item item : itemList) {
 				JSONObject jsonObject = item.toJSONObject();
 				System.out.println(jsonObject);
-			}
+			} 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -85,12 +83,9 @@ public class TicketMasterAPI implements ExternalAPI{
 	/**
 	 * Helper methods
 	 */
-	// Convert JSONArray to a list of item objects.
-	
-	/*将JSONarray里的信息进行筛选，返回一个item list*/
+	//Convert JSONArray to a list of item objects
 	private List<Item> getItemList(JSONArray events) throws JSONException {
 		List<Item> itemList = new ArrayList<>();
-
 		for (int i = 0; i < events.length(); i++) {
 			JSONObject event = events.getJSONObject(i);
 			ItemBuilder builder = new ItemBuilder();
@@ -135,15 +130,13 @@ public class TicketMasterAPI implements ExternalAPI{
 					builder.setLongitude(getNumericFieldOrNull(location, "longitude"));
 				}
 			}
-
-			// Uses this builder pattern we can freely add fields.
+			//Uses this builder pattern we can freely add field
 			Item item = builder.build();
 			itemList.add(item);
 		}
-
 		return itemList;
 	}
-
+	
 	private JSONObject getVenue(JSONObject event) throws JSONException {
 		if (!event.isNull("_embedded")) {
 			JSONObject embedded = event.getJSONObject("_embedded");
@@ -156,17 +149,17 @@ public class TicketMasterAPI implements ExternalAPI{
 		}
 		return null;
 	}
-
+	
 	private String getImageUrl(JSONObject event) throws JSONException {
 		if (!event.isNull("images")) {
 			JSONArray imagesArray = event.getJSONArray("images");
 			if (imagesArray.length() >= 1) {
-				return getStringFieldOrNull(imagesArray.getJSONObject(0), "url" );
+				return getStringFieldOrNull(imagesArray.getJSONObject(0), "url");
 			}
 		}
 		return null;
 	}
-
+	
 	private String getDescription(JSONObject event) throws JSONException {
 		if (!event.isNull("description")) {
 			return event.getString("description");
@@ -179,7 +172,7 @@ public class TicketMasterAPI implements ExternalAPI{
 		}
 		return null;
 	}
-
+	
 	private Set<String> getCategories(JSONObject event) throws JSONException {
 		Set<String> categories = new HashSet<>();
 		JSONArray classifications = (JSONArray) event.get("classifications");
@@ -190,21 +183,22 @@ public class TicketMasterAPI implements ExternalAPI{
 		}
 		return categories;
 	}
-
+	
 	private String getStringFieldOrNull(JSONObject event, String field) throws JSONException {
 		return event.isNull(field) ? null : event.getString(field);
 	}
-
+	
 	private double getNumericFieldOrNull(JSONObject event, String field) throws JSONException {
 		return event.isNull(field) ? 0.0 : event.getDouble(field);
 	}
-
- 
 	/**
-	 * Main entry for sample TicketMaster API requests.
+	 * main entry for sample TicketMasterAPI request
 	 */
-	public static void main(String[] args) {
-		TicketMasterAPI tmApi = new TicketMasterAPI();
-		tmApi.queryAPI(37.38, -122.08);
-	}
+	
+//	public static void main(String[] args) {
+//		TicketMasterAPI tmApi = new TicketMasterAPI();
+//		tmApi.queryAPI(37.38, -122.08);
+//	}
+	
 }
+

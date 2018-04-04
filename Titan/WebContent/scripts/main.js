@@ -144,6 +144,7 @@
 		// The request parameters
 		var url = './LoginServlet';
 		var params = 'user_id=' + username + '&password=' + password;
+		console.log(params); 
 		var req = JSON.stringify({});
 
 		ajax('POST', url + '?' + params, req,
